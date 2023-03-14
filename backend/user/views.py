@@ -1,9 +1,10 @@
 from rest_framework.response import Response
+from rest_framework.generics import GenericAPIView
 from rest_framework.views import status
 from rest_framework.views import APIView
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, \
-    UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer
-from django.contrib.auth import authenticate
+    UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer
+from django.contrib.auth import authenticate,logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
@@ -29,18 +30,37 @@ class UserRegistrationView(APIView):
 
 class UserLoginView(APIView):
     def post(self, request, format=None):
+        print(request.data)
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             email = serializer.data.get('email')
             password = serializer.data.get('password')
             user = authenticate(email=email, password=password)
-            token = get_tokens_for_user(user)
             if user is not None:
-                return Response({"token": token, "msg": "Login Success"}, status=status.HTTP_200_OK)
+                token = get_tokens_for_user(user)
+                return Response({"token": token, "type": user.is_staff}, status=status.HTTP_200_OK)
             else:
-                return Response({'errors': {'non_field_errors': ['Email or Password is not Valid']}},
+                return Response({'errors': 'Email or Password is not Valid'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
+
+
+# class UserLogoutView(APIView):
+#
+#     def post(self, request, format=None):
+#         request.user.auth_token.delete()
+#         data = {'success': 'Sucessfully logged out'}
+#         return Response(data=data, status=status.HTTP_200_OK)
+
+class UserLogoutView(GenericAPIView):
+    serializer_class = LogoutTokenSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args):
+        sz = self.get_serializer(data=request.data)
+        sz.is_valid(raise_exception=True)
+        sz.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
