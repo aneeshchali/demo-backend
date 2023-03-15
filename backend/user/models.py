@@ -15,7 +15,7 @@ from django.contrib.auth.models import (
 # Custom User Manager:
 
 class MyUserManager(BaseUserManager):
-    def create_user(self, email, name, tc, is_staff, password=None, password2=None):
+    def create_user(self, email, name,is_staff, password=None, password2=None):
         """
         Create and Save User with email name,tc, password
         """
@@ -25,7 +25,6 @@ class MyUserManager(BaseUserManager):
         user = self.model(
             email=self.normalize_email(email),
             name=name,
-            tc=tc,
             is_staff=is_staff
         )
 
@@ -33,7 +32,7 @@ class MyUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, name, tc, password=None, **extra_fields):
+    def create_superuser(self, email, name,password=None, **extra_fields):
         """
         Creates and saves a superuser with the given email, date of
         birth and password.
@@ -42,7 +41,6 @@ class MyUserManager(BaseUserManager):
             email,
             password=password,
             name=name,
-            tc=tc,
             is_staff=True
         )
         user.is_admin = True
@@ -59,8 +57,7 @@ class User(AbstractBaseUser):
         unique=True,
     )
     name = models.CharField(max_length=200)
-    tc = models.BooleanField()
-    is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -69,7 +66,7 @@ class User(AbstractBaseUser):
     objects = MyUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name', 'tc']
+    REQUIRED_FIELDS = ['name']
 
     def __str__(self):
         return self.email
@@ -96,10 +93,9 @@ class Patient(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
     )
-    img = models.ImageField(upload_to=None,max_length=300, null=True)
+    img = models.URLField(null=True)
     age = models.IntegerField(default=18)
-    first_name = models.CharField(max_length=200,default=None)
-    last_name = models.CharField(max_length=200,default=None)
+    phone = models.CharField(null=True, max_length=20, default=None)
     Male = 'M'
     Female = 'F'
     Others = 'O'
@@ -126,16 +122,15 @@ class Doctor(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
     )
-    img = models.ImageField(upload_to=None,max_length=300,null=True)
-    first_name = models.CharField(max_length=200, default=None)
-    last_name = models.CharField(max_length=200, default=None)
+    img = models.URLField(null=True)
+    phone = models.CharField(null=True, max_length=20,default=None)
     qualification = models.CharField(max_length=200, default=None)
     speciality = models.CharField(max_length=200, default=None)
     hosp_name = models.CharField(max_length=200, default=None)
     experience = models.PositiveIntegerField(default=0)
     fees = models.PositiveIntegerField(default=399)
-    slot_start = models.PositiveIntegerField(default=12)
-    slot_end = models.PositiveIntegerField(default=6)
+    slot_start = models.DateTimeField(default=None)
+    slot_end = models.DateTimeField(default=None)
     age = models.IntegerField(default=18)
     Male = 'M'
     Female = 'F'

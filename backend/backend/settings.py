@@ -45,6 +45,13 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'fakeoffice007@gmail.com'
+EMAIL_HOST_PASSWORD = 'gfltmuxljpsyycia'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -57,8 +64,8 @@ MIDDLEWARE = [
 ]
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=20),
 
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
@@ -116,9 +123,9 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'daetxkyn',
-        'USER': 'daetxkyn',
-        'PASSWORD': 'sJ63RYj3yETXR5f6hdpbdA4YZTVlBXEj',
+        'NAME': 'wtklukmo',
+        'USER': 'wtklukmo',
+        'PASSWORD': 'bShZu-KWC7OBLKAcNv8K-mZOxCudimzj',
         'HOST': 'tiny.db.elephantsql.com',
         'PORT': '',
     }
@@ -171,4 +178,5 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://192.168.200.104",
+    "http://192.168.200.104:3000"
 ]
