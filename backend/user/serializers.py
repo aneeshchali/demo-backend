@@ -8,7 +8,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 from django.utils.text import gettext_lazy as _
-from rest_framework_simplejwt.tokens import RefreshToken,TokenError
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -44,6 +44,25 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'name']
+
+
+class SubmitOtpSerializer(serializers.Serializer):
+    otp = serializers.CharField(max_length=6, write_only=True)
+
+    class Meta:
+        fields = ['otp']
+
+    def validate(self, attrs):
+        otp = attrs.get('otp')
+        print(otp)
+        user = self.context.get('user')
+        userOTP =user.otp
+        if int(userOTP) == int(otp):
+            user.is_verified = True
+            user.save()
+        else:
+            raise serializers.ValidationError("Otp is Invalid")
+        return attrs
 
 
 class UserChangePasswordSerializer(serializers.Serializer):
@@ -83,7 +102,7 @@ class UserPasswordResetSerializer(serializers.Serializer):
             # Send Email
             return attrs
         else:
-            raise serializers.ValidationError({'error':'You are not a Registered User'})
+            raise serializers.ValidationError({'error': 'You are not a Registered User'})
 
 
 class FinalPasswordResetSerializer(serializers.Serializer):
@@ -109,8 +128,8 @@ class FinalPasswordResetSerializer(serializers.Serializer):
             user.save()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
-            PasswordResetTokenGenerator().check_token(user,token)
-            raise serializers.ValidationError({"error":"Token is not valid or Expired!"})
+            PasswordResetTokenGenerator().check_token(user, token)
+            raise serializers.ValidationError({"error": "Token is not valid or Expired!"})
 
 
 class LogoutTokenSerializer(serializers.Serializer):

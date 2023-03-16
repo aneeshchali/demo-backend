@@ -3,10 +3,11 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.views import status
 from rest_framework.views import APIView
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, \
-    UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer
+    UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer,SubmitOtpSerializer
 from django.contrib.auth import authenticate,logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from .helpers import OtpGenerator
 
 
 def get_tokens_for_user(user):
@@ -38,7 +39,7 @@ class UserLoginView(APIView):
             user = authenticate(email=email, password=password)
             if user is not None:
                 token = get_tokens_for_user(user)
-                return Response({"token": token, "type": user.is_staff}, status=status.HTTP_200_OK)
+                return Response({"token": token, "type": user.is_staff,"verified":user.is_verified,"details":user.details_status}, status=status.HTTP_200_OK)
             else:
                 return Response({'errors': 'Email or Password is not Valid'},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -69,6 +70,23 @@ class UserProfileView(APIView):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class OtpRefreshView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        user = request.user
+        user.otp = OtpGenerator.generateOTP()
+        user.save()
+        return Response({'message': "New Otp Sent."}, status=status.HTTP_200_OK)
+
+
+class OtpSubmitView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        serializer = SubmitOtpSerializer(data=request.data, context={'user': request.user})
+        if serializer.is_valid(raise_exception=True):
+            return Response({'message': "Success!"}, status=status.HTTP_200_OK)
 
 class UserChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]

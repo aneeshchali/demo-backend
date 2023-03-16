@@ -3,9 +3,12 @@ import datetime
 from django.db import models
 
 
+
 #signals import
 from django.db.models.signals import pre_save,post_save
 from django.dispatch import receiver
+from .helpers import OtpGenerator
+from django.core.mail import send_mail
 
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
@@ -22,14 +25,21 @@ class MyUserManager(BaseUserManager):
         if not email:
             raise ValueError('Users must have an email address')
 
+        otp = OtpGenerator.generateOTP()
+
         user = self.model(
             email=self.normalize_email(email),
             name=name,
-            is_staff=is_staff
+            is_staff=is_staff,
+            otp=otp
         )
-
         user.set_password(password)
         user.save(using=self._db)
+
+        if user.is_staff == True:
+            Doctor.objects.create(user=user)
+        else:
+            Patient.objects.create(user=user)
         return user
 
     def create_superuser(self, email, name,password=None, **extra_fields):
@@ -57,9 +67,11 @@ class User(AbstractBaseUser):
         unique=True,
     )
     name = models.CharField(max_length=200)
-    is_verified = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False)
+    details_status = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
+    otp = models.IntegerField(default=000000)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -81,11 +93,21 @@ class User(AbstractBaseUser):
         # Simplest possible answer: Yes, always
         return True
 
-# @receiver(pre_save,sender=User)
+@receiver(post_save,sender=User)
+def print_anything(sender,instance,**kwargs):
+    if not instance.is_verified:
+        send_mail(
+            'Here is Your OTP',
+            instance.otp,
+            'fakeoffice007@gmail.com',
+            [instance.email],
+            fail_silently=False,
+        )
+
+# @receiver(post_save,sender=User)
 # def print_anything(sender,instance,**kwargs):
 #     print(instance.is_staff) #this gives the post save value
 #     print(sender.objects.get(id=instance.id).is_staff) #this provide the pre save value from the model direct.
-
 
 class Patient(models.Model):
     user = models.OneToOneField(
@@ -124,14 +146,14 @@ class Doctor(models.Model):
     )
     img = models.URLField(null=True)
     phone = models.CharField(null=True, max_length=20,default=None)
-    qualification = models.CharField(max_length=200, default=None)
-    speciality = models.CharField(max_length=200, default=None)
-    hosp_name = models.CharField(max_length=200, default=None)
+    qualification = models.CharField(null=True,max_length=200, default=None)
+    speciality = models.CharField(null=True,max_length=200, default=None)
+    hosp_name = models.CharField(null=True,max_length=200, default=None)
     experience = models.PositiveIntegerField(default=0)
     fees = models.PositiveIntegerField(default=399)
-    slot_start = models.DateTimeField(default=None)
-    slot_end = models.DateTimeField(default=None)
-    age = models.IntegerField(default=18)
+    slot_start = models.DateTimeField(null=True,default=None)
+    slot_end = models.DateTimeField(null=True,default=None)
+    age = models.IntegerField(null=True,default=18)
     Male = 'M'
     Female = 'F'
     Others = 'O'

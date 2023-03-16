@@ -64,8 +64,8 @@ MIDDLEWARE = [
 ]
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=20),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
@@ -123,10 +123,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'wtklukmo',
-        'USER': 'wtklukmo',
-        'PASSWORD': 'bShZu-KWC7OBLKAcNv8K-mZOxCudimzj',
-        'HOST': 'tiny.db.elephantsql.com',
+        'NAME': 'ffjyypta',
+        'USER': 'ffjyypta',
+        'PASSWORD': 'MeOms45zplCEESVxr0RGoZf7bF2r5ai5',
+        'HOST': 'john.db.elephantsql.com',
         'PORT': '',
     }
 }
