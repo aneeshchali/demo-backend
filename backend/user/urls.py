@@ -1,9 +1,10 @@
 from django.urls import path
 from .views import UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView, \
-    UserPasswordResetView, FinalPasswordResetView,UserLogoutView,OtpRefreshView,OtpSubmitView
+    UserPasswordResetView, FinalPasswordResetView,UserLogoutView,OtpRefreshView,OtpSubmitView,ExtraDocDetailsView
 
 urlpatterns = [
     path('register/', UserRegistrationView.as_view(), name="register"),
+    path('extra/doc/', ExtraDocDetailsView.as_view(), name="register"),
     path('login/', UserLoginView.as_view(), name="login"),
     path('logout/', UserLogoutView.as_view(), name="logout"),
     path('otp/refresh/', OtpRefreshView.as_view(), name="logout"),

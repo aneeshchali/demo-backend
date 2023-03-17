@@ -1,6 +1,6 @@
 from xml.dom import ValidationErr
 from rest_framework import serializers
-from .models import User
+from .models import User, Doctor
 
 # below import for Password reset email and encode and decode:
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
@@ -32,6 +32,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
+class ExtraDocDetailsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Doctor
+        fields = ['phone', 'qualification', 'speciality', 'hosp_name', 'experience', 'fees', 'slot_start', 'slot_end',
+                  'age', 'gender']
+    #
+    # def update(self, instance, validated_data):
+    #     return Doctor.objects.fil
+
+
 class UserLoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=255)
 
@@ -56,7 +67,7 @@ class SubmitOtpSerializer(serializers.Serializer):
         otp = attrs.get('otp')
         print(otp)
         user = self.context.get('user')
-        userOTP =user.otp
+        userOTP = user.otp
         if int(userOTP) == int(otp):
             user.is_verified = True
             user.save()

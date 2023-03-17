@@ -3,8 +3,9 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.views import status
 from rest_framework.views import APIView
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, \
-    UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer,SubmitOtpSerializer
-from django.contrib.auth import authenticate,logout
+    UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer, \
+    SubmitOtpSerializer, ExtraDocDetailsSerializer
+from django.contrib.auth import authenticate, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .helpers import OtpGenerator
@@ -29,6 +30,16 @@ class UserRegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ExtraDocDetailsView(APIView):
+    def put(self, request, format=None):
+        print(request.data)
+        serializer = ExtraDocDetailsSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            doc = serializer.save()
+            return Response({'message': 'Successfull Update!'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserLoginView(APIView):
     def post(self, request, format=None):
         print(request.data)
@@ -39,11 +50,11 @@ class UserLoginView(APIView):
             user = authenticate(email=email, password=password)
             if user is not None:
                 token = get_tokens_for_user(user)
-                return Response({"token": token, "type": user.is_staff,"verified":user.is_verified,"details":user.details_status}, status=status.HTTP_200_OK)
+                return Response({"token": token, "type": user.is_staff, "verified": user.is_verified,
+                                 "details": user.details_status}, status=status.HTTP_200_OK)
             else:
                 return Response({'errors': 'Email or Password is not Valid'},
                                 status=status.HTTP_400_BAD_REQUEST)
-
 
 
 # class UserLogoutView(APIView):
@@ -63,12 +74,14 @@ class UserLogoutView(GenericAPIView):
         sz.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class OtpRefreshView(APIView):
     permission_classes = [IsAuthenticated]
@@ -87,6 +100,7 @@ class OtpSubmitView(APIView):
         serializer = SubmitOtpSerializer(data=request.data, context={'user': request.user})
         if serializer.is_valid(raise_exception=True):
             return Response({'message': "Success!"}, status=status.HTTP_200_OK)
+
 
 class UserChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -110,4 +124,4 @@ class FinalPasswordResetView(APIView):
     def post(self, request, uid, token, format=None):
         serializer = FinalPasswordResetSerializer(data=request.data, context={'uid': uid, 'token': token})
         serializer.is_valid(raise_exception=True)
-        return Response({"message":"Password Reset Successfully"},status = status.HTTP_200_OK)
+        return Response({"message": "Password Reset Successfully"}, status=status.HTTP_200_OK)
