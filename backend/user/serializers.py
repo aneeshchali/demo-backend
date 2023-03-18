@@ -32,15 +32,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class ExtraDocDetailsSerializer(serializers.ModelSerializer):
+class ExtraDocDetailsSerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20, write_only=True)
+    qualification = serializers.CharField( max_length=200, write_only=True)
+    speciality = serializers.CharField(max_length=200, write_only=True)
+    hosp_name = serializers.CharField(max_length=200, write_only=True)
+    experience = serializers.IntegerField(write_only=True)
+    fees = serializers.IntegerField(write_only=True)
+    slot_start = serializers.TimeField(write_only=True)
+    slot_end = serializers.TimeField(write_only=True)
+    age = serializers.IntegerField(write_only=True)
+    gender = serializers.CharField(
+        max_length=2,
+        write_only=True
+    )
 
     class Meta:
-        model = Doctor
         fields = ['phone', 'qualification', 'speciality', 'hosp_name', 'experience', 'fees', 'slot_start', 'slot_end',
                   'age', 'gender']
-    #
-    # def update(self, instance, validated_data):
-    #     return Doctor.objects.fil
+
+    def validate(self, attrs):
+        user = self.context.get('user')
+        doc =  Doctor.objects.filter(user=user)
+        print(doc)
+        return attrs
 
 
 class UserLoginSerializer(serializers.ModelSerializer):

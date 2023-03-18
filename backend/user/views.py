@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .helpers import OtpGenerator
-
+import datetime
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -31,11 +31,16 @@ class UserRegistrationView(APIView):
 
 
 class ExtraDocDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def put(self, request, format=None):
+        a = request.data["slot_start"].split(":")
+        c = request.data["slot_end"].split(":")
+        request.data["slot_start"] = datetime.time(int(a[0]),int(a[1]),int(a[2]))
+        request.data["slot_end"] = datetime.time(int(c[0]),int(c[1]),int(c[2]))
         print(request.data)
-        serializer = ExtraDocDetailsSerializer(data=request.data)
+        serializer = ExtraDocDetailsSerializer(data=request.data, context={'user': request.user})
         if serializer.is_valid(raise_exception=True):
-            doc = serializer.save()
             return Response({'message': 'Successfull Update!'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

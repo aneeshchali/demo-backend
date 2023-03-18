@@ -151,8 +151,8 @@ class Doctor(models.Model):
     hosp_name = models.CharField(null=True,max_length=200, default=None)
     experience = models.PositiveIntegerField(default=0)
     fees = models.PositiveIntegerField(default=399)
-    slot_start = models.DateTimeField(null=True,default=None)
-    slot_end = models.DateTimeField(null=True,default=None)
+    slot_start = models.TimeField(null=True,default=None)
+    slot_end = models.TimeField(null=True,default=None)
     age = models.IntegerField(null=True,default=18)
     Male = 'M'
     Female = 'F'

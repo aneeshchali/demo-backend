@@ -123,10 +123,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'ffjyypta',
-        'USER': 'ffjyypta',
-        'PASSWORD': 'MeOms45zplCEESVxr0RGoZf7bF2r5ai5',
-        'HOST': 'john.db.elephantsql.com',
+        'NAME': 'pdrrdiik',
+        'USER': 'pdrrdiik',
+        'PASSWORD': 'hX70KSgo3q10MDTNPk8S27JuRp8wGGDb',
+        'HOST': 'tiny.db.elephantsql.com',
         'PORT': '',
     }
 }
