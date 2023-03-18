@@ -1,6 +1,7 @@
 from xml.dom import ValidationErr
+import datetime
 from rest_framework import serializers
-from .models import User, Doctor
+from .models import User, Doctor, Patient
 
 # below import for Password reset email and encode and decode:
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
@@ -34,13 +35,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class ExtraDocDetailsSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=20, write_only=True)
-    qualification = serializers.CharField( max_length=200, write_only=True)
+    qualification = serializers.CharField(max_length=200, write_only=True)
     speciality = serializers.CharField(max_length=200, write_only=True)
     hosp_name = serializers.CharField(max_length=200, write_only=True)
     experience = serializers.IntegerField(write_only=True)
     fees = serializers.IntegerField(write_only=True)
-    slot_start = serializers.TimeField(write_only=True)
-    slot_end = serializers.TimeField(write_only=True)
+    slot_start = serializers.CharField(max_length=8, write_only=True)
+    slot_end = serializers.CharField(max_length=8, write_only=True)
     age = serializers.IntegerField(write_only=True)
     gender = serializers.CharField(
         max_length=2,
@@ -53,8 +54,48 @@ class ExtraDocDetailsSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = self.context.get('user')
-        doc =  Doctor.objects.filter(user=user)
-        print(doc)
+        doc = Doctor.objects.get(user=user)
+        doc.phone = attrs.get('phone')
+        doc.qualification = attrs.get('qualification')
+        doc.speciality = attrs.get('speciality')
+        doc.hosp_name = attrs.get('hosp_name')
+        doc.fees = attrs.get('experience')
+        doc.experience = attrs.get('fees')
+        a = attrs.get('slot_start').split(":")
+        c = attrs.get('slot_end').split(":")
+        if len(a) and len(c) <= 2:
+            raise serializers.ValidationError("Time input is invalid!")
+        b = datetime.time(int(a[0]), int(a[1]), int(a[2]))
+        d = datetime.time(int(c[0]), int(c[1]), int(c[2]))
+        if type(a) and type(c) == datetime.time:
+            doc.slot_start = b
+            doc.slot_end = d
+        else:
+            raise serializers.ValidationError("Time input is invalid!")
+        doc.age = attrs.get('age')
+        doc.gender = attrs.get('gender')
+        doc.save()
+        return attrs
+
+
+class ExtraPatDetailsSerializer(serializers.Serializer):
+    phone = serializers.CharField(max_length=20, write_only=True)
+    age = serializers.IntegerField(write_only=True)
+    gender = serializers.CharField(
+        max_length=2,
+        write_only=True
+    )
+
+    class Meta:
+        fields = ['phone', 'age', 'gender']
+
+    def validate(self, attrs):
+        user = self.context.get('user')
+        pat = Patient.objects.get(user=user)
+        pat.phone = attrs.get('phone')
+        pat.age = attrs.get('age')
+        pat.gender = attrs.get('gender')
+        pat.save()
         return attrs
 
 
@@ -70,6 +111,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'name']
+
+
+class DocSettingDetailsSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Doctor
+        fields = ["user_id", "phone", "qualification", "speciality", "hosp_name", "experience", "fees", "slot_start",
+                  "slot_end", "age", "gender"]
+
 
 
 class SubmitOtpSerializer(serializers.Serializer):
