@@ -35,6 +35,7 @@ class ExtraDocDetailsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, format=None):
+        print(request.data)
 
         serializer = ExtraDocDetailsSerializer(data=request.data, context={'user': request.user})
         if serializer.is_valid(raise_exception=True):

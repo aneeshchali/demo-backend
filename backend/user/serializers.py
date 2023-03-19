@@ -62,12 +62,14 @@ class ExtraDocDetailsSerializer(serializers.Serializer):
         doc.fees = attrs.get('experience')
         doc.experience = attrs.get('fees')
         a = attrs.get('slot_start').split(":")
+        print(a)
         c = attrs.get('slot_end').split(":")
         if len(a) and len(c) <= 2:
             raise serializers.ValidationError("Time input is invalid!")
         b = datetime.time(int(a[0]), int(a[1]), int(a[2]))
         d = datetime.time(int(c[0]), int(c[1]), int(c[2]))
-        if type(a) and type(c) == datetime.time:
+
+        if type(b) and type(d) == datetime.time:
             doc.slot_start = b
             doc.slot_end = d
         else:
@@ -118,7 +120,6 @@ class DocSettingDetailsSerializers(serializers.ModelSerializer):
         model = Doctor
         fields = ["user_id", "phone", "qualification", "speciality", "hosp_name", "experience", "fees", "slot_start",
                   "slot_end", "age", "gender"]
-
 
 
 class SubmitOtpSerializer(serializers.Serializer):
