@@ -1,16 +1,17 @@
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView,ListAPIView
 from rest_framework.views import status
 from rest_framework.views import APIView
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, \
     UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer, \
-    SubmitOtpSerializer, ExtraDocDetailsSerializer,ExtraPatDetailsSerializer,DocSettingDetailsSerializers
+    SubmitOtpSerializer, ExtraDocDetailsSerializer,ExtraPatDetailsSerializer,DocSettingDetailsSerializers,PatSettingsDetailsSerializer
 from django.contrib.auth import authenticate, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .helpers import OtpGenerator
-import datetime
-from .models import Doctor
+# import datetime
+from .models import Doctor,Patient
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -36,12 +37,16 @@ class ExtraDocDetailsView(APIView):
 
     def put(self, request, format=None):
         print(request.data)
-
         serializer = ExtraDocDetailsSerializer(data=request.data, context={'user': request.user})
         if serializer.is_valid(raise_exception=True):
             return Response({'message': 'Successfull Update!'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get(self, request, format=None):
+        doctor = Doctor.objects.get(user=request.user)
+        serializer = DocSettingDetailsSerializers(doctor)
+        print(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ExtraPatDetailsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -51,6 +56,17 @@ class ExtraPatDetailsView(APIView):
         if serializer.is_valid(raise_exception=True):
             return Response({'message': 'Successfull Update!'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, format=None):
+        patient = Patient.objects.get(user=request.user)
+        serializer = PatSettingsDetailsSerializer(patient)
+        print(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    # def get(self,request,format=None):
+    #     serializer = docSettingsListSerializer(request.user)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 
 class UserLoginView(APIView):
@@ -97,16 +113,25 @@ class UserProfileView(APIView):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class DocSettingDetailsView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def get(self, request, format=None):
-        doctor = Doctor.objects.get(user=request.user)
-        serializer = DocSettingDetailsSerializers(doctor)
-        print(serializer.data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 10
 
+# class DocDetailsView(APIView):
+#     pagination_class = StandardResultsSetPagination
+#
+#     def get(self, request, format=None):
+#         qs = Doctor.objects.filter(details_status=True).all()
+#         serializer = DocSettingDetailsSerializers(qs, many=True)
+#         print(serializer.data)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class DocDetailsView(ListAPIView):
+    pagination_class = StandardResultsSetPagination
+    queryset = Doctor.objects.filter(details_status=True).all()
+    serializer_class = DocSettingDetailsSerializers
 
 
 class OtpRefreshView(APIView):

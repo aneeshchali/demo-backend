@@ -54,6 +54,8 @@ class ExtraDocDetailsSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = self.context.get('user')
+        user.details_status = True
+        user.save()
         doc = Doctor.objects.get(user=user)
         doc.phone = attrs.get('phone')
         doc.qualification = attrs.get('qualification')
@@ -76,6 +78,7 @@ class ExtraDocDetailsSerializer(serializers.Serializer):
             raise serializers.ValidationError("Time input is invalid!")
         doc.age = attrs.get('age')
         doc.gender = attrs.get('gender')
+        doc.details_status = True
         doc.save()
         return attrs
 
@@ -93,12 +96,24 @@ class ExtraPatDetailsSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = self.context.get('user')
+        user.details_status = True
+        user.save()
         pat = Patient.objects.get(user=user)
         pat.phone = attrs.get('phone')
         pat.age = attrs.get('age')
         pat.gender = attrs.get('gender')
+        pat.details_status = True
         pat.save()
         return attrs
+
+
+# class docSettingsListSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Doctor
+#         fields = ['phone', 'qualification', 'speciality', 'hosp_name', 'experience', 'fees', 'slot_start', 'slot_end',
+#                   'age', 'gender']
+#
+
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
@@ -121,6 +136,10 @@ class DocSettingDetailsSerializers(serializers.ModelSerializer):
         fields = ["user_id", "phone", "qualification", "speciality", "hosp_name", "experience", "fees", "slot_start",
                   "slot_end", "age", "gender"]
 
+class PatSettingsDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patient
+        fields =  ['phone', 'age', 'gender']
 
 class SubmitOtpSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, write_only=True)

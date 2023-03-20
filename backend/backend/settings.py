@@ -85,6 +85,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
     # 'DEFAULT_RENDERER_CLASSES': [ to turn off the DRF panel for api in production
     #     'rest_framework.renderers.JSONRenderer',
     # ]
