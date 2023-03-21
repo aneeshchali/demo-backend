@@ -133,13 +133,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class DocSettingDetailsSerializers(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        fields = ["user_id", "phone", "qualification", "speciality", "hosp_name", "experience", "fees", "slot_start",
+        fields = ["user_id","img", "phone", "qualification", "speciality", "hosp_name", "experience", "fees", "slot_start",
                   "slot_end", "age", "gender"]
 
 class PatSettingsDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
-        fields =  ['phone', 'age', 'gender']
+        fields =  ["img",'phone', 'age', 'gender']
 
 class SubmitOtpSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, write_only=True)

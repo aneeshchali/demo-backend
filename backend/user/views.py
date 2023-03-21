@@ -66,6 +66,20 @@ class ExtraPatDetailsView(APIView):
     #     serializer = docSettingsListSerializer(request.user)
     #     return Response(serializer.data, status=status.HTTP_200_OK)
 
+class ImgUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self,request):
+        user = request.user
+        if user.is_staff:
+            doctor = Doctor.objects.get(user=request.user)
+            doctor.img = request.data["data"]
+            doctor.save()
+        else:
+            patient = Patient.objects.get(user=request.user)
+            patient.img = request.data["data"]
+            patient.save()
+        return Response({'message': 'Successfull Update!'}, status=status.HTTP_201_CREATED)
+
 
 
 
@@ -114,24 +128,15 @@ class UserProfileView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 5
-    page_size_query_param = 'page_size'
-    max_page_size = 10
-
-# class DocDetailsView(APIView):
-#     pagination_class = StandardResultsSetPagination
+# class StandardResultsSetPagination(PageNumberPagination):
+#     page_size = 5
+#     page_size_query_param = 'page_size'
+#     max_page_size = 10
 #
-#     def get(self, request, format=None):
-#         qs = Doctor.objects.filter(details_status=True).all()
-#         serializer = DocSettingDetailsSerializers(qs, many=True)
-#         print(serializer.data)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class DocDetailsView(ListAPIView):
-    pagination_class = StandardResultsSetPagination
-    queryset = Doctor.objects.filter(details_status=True).all()
-    serializer_class = DocSettingDetailsSerializers
+# class DocDetailsView(ListAPIView):
+#     pagination_class = StandardResultsSetPagination
+#     queryset = Doctor.objects.filter(details_status=True).all()
+#     serializer_class = DocSettingDetailsSerializers
 
 
 class OtpRefreshView(APIView):
