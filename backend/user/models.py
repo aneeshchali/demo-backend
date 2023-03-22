@@ -169,7 +169,7 @@ class Doctor(models.Model):
     )
     available = models.BooleanField(default=True)
     details_status = models.BooleanField(default=False)
-    admin_verified = models.BooleanField(default=False)
+    admin_verified = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

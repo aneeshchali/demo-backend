@@ -11,3 +11,9 @@ class DocDetailsSerializers(serializers.ModelSerializer):
 
     def get_user_name(self,obj):
         return obj.user.name
+
+class DocSpecialistSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Doctor
+        fields = ["speciality"]
+
