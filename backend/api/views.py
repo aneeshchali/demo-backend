@@ -2,12 +2,13 @@
 from rest_framework.pagination import PageNumberPagination
 from .pagination import PaginationHandlerMixin
 from django.db.models import Q
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.views import APIView
 from user.models import Doctor
 from rest_framework.response import Response
 from rest_framework.views import status
-from .serializers import DocDetailsSerializers,DocSpecialistSerializers
+from .serializers import DocDetailsSerializers,DocSpecialistSerializers,BookSlotSerializer
+from rest_framework.permissions import IsAuthenticated
 
 
 # Create your views here.
@@ -83,3 +84,14 @@ class DocDetailsView(APIView, PaginationHandlerMixin):
 class DocSpecialityView(ListAPIView):
     queryset = Doctor.objects.filter(details_status=True).all()
     serializer_class = DocSpecialistSerializers
+
+
+class SlotBookingView(GenericAPIView):
+    serializer_class = BookSlotSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args):
+        print(request.data)
+        sz = self.get_serializer(data=request.data, context={'patient': request.user})
+        sz.is_valid(raise_exception=True)
+        return Response({"yeyy":"a"},status=status.HTTP_200_OK)

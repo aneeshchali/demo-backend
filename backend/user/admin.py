@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User,Doctor,Patient
+from .models import User,Doctor,Patient,Slots
 
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -35,6 +35,7 @@ class UserModelAdmin(BaseUserAdmin):
 
 admin.site.register(User,UserModelAdmin)
 admin.site.register(Doctor)
+admin.site.register(Slots)
 
 # class PatientAdmin(admin.ModelAdmin):
 #     fields = ['user','gender' ,'age']

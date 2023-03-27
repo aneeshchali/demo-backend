@@ -175,3 +175,20 @@ class Doctor(models.Model):
 
     def __str__(self):
         return self.user.name
+
+
+class Slots(models.Model):
+    doctor =  models.ForeignKey(Doctor, on_delete=models.CASCADE)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    video_id = models.CharField(null=True,max_length=1000, default=None)
+    video_recording = models.CharField(null=True,max_length=1000, default=None)
+    video_cred = models.CharField(null=True,max_length=1000, default=None)
+    slot_selected = models.DateTimeField( blank=True,default=None)
+    prescription_status = models.BooleanField(default=False)
+    prescription = models.CharField(null=True,max_length=1000, default=None)
+    payment_status = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.dname.user.name} <-> {self.pname.user.name}"
