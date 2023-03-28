@@ -43,8 +43,12 @@ class BookSlotSerializer(serializers.Serializer):
         date_time = datetime.datetime.strptime(date_time, "%d-%m-%Y %I:%M %p")
         doctor_id = attrs.get('doctor_id')
         # return attrs
+        if date_time<datetime.datetime.now():
+            print("hellooo")
+            raise serializers.ValidationError({'error': 'Uh oh!, This is a old time slot!'})
+
         if Slots.objects.filter(slot_selected=date_time).exists():
-            raise serializers.ValidationError({'error': 'Uh oh!, This slot is not empty.'})
+            raise serializers.ValidationError({'error': 'Uh oh!, This slot is already booked.'})
         else:
 
             VIDEOSDK_API_KEY = "c24cd584-1bdd-4b8a-b59c-72e94e0eb715"
@@ -59,7 +63,7 @@ class BookSlotSerializer(serializers.Serializer):
                 'apikey': VIDEOSDK_API_KEY,
                 'permissions': ['allow_join', 'allow_mod'],
             }, key=VIDEOSDK_SECRET_KEY, algorithm='HS256')
-            print(token)
+            # print(token)
             res = ''.join(random.choices(string.ascii_uppercase, k=N))
             doctor = Doctor.objects.get(user_id=doctor_id)
             patient = Patient.objects.get(user=patient)
