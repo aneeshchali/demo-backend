@@ -23,6 +23,25 @@ class DocDetailsSerializers(serializers.ModelSerializer):
     def get_user_name(self, obj):
         return obj.user.name
 
+class DashboardTableSerializer(serializers.ModelSerializer):
+
+    doc_name = serializers.SerializerMethodField()
+    pat_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Slots
+        fields = ["slot_selected","doc_name","pat_name","doctor","patient","prescription_status","prescription"]
+
+    def get_doc_name(self, obj):
+        return obj.doctor.user.name
+
+    def get_pat_name(self, obj):
+        return obj.patient.user.name
+
+
+
+
+
 
 class DocSpecialistSerializers(serializers.ModelSerializer):
     class Meta:

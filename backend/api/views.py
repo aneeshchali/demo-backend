@@ -1,13 +1,15 @@
 # from django.shortcuts import render
+import datetime
+
 from rest_framework.pagination import PageNumberPagination
 from .pagination import PaginationHandlerMixin
 from django.db.models import Q
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.views import APIView
-from user.models import Doctor
+from user.models import Doctor,Slots,Patient
 from rest_framework.response import Response
 from rest_framework.views import status
-from .serializers import DocDetailsSerializers,DocSpecialistSerializers,BookSlotSerializer
+from .serializers import DocDetailsSerializers,DocSpecialistSerializers,BookSlotSerializer,DashboardTableSerializer
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -95,3 +97,28 @@ class SlotBookingView(GenericAPIView):
         sz = self.get_serializer(data=request.data, context={'patient': request.user})
         sz.is_valid(raise_exception=True)
         return Response({"success":"successful slot booking!"},status=status.HTTP_200_OK)
+
+class DashboardTableView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = DashboardTableSerializer
+
+    def get(self, request, format=None):
+        user = request.user
+        tabletype = request.GET.get('tabletype')
+        print(tabletype)
+        if user.is_staff:
+            mydoc = Doctor.objects.get(user=user)
+            instance = Slots.objects.filter(doctor=mydoc, slot_selected__lt=datetime.datetime.now()).all()
+            if tabletype=="f":
+                instance = Slots.objects.filter(doctor=mydoc, slot_selected__gte=datetime.datetime.now()).all()
+
+        else:
+            mypat = Patient.objects.get(user=user)
+            instance = Slots.objects.filter(patient=mypat, slot_selected__lt=datetime.datetime.now()).all()
+            if tabletype == "f":
+                instance = Slots.objects.filter(patient=mypat, slot_selected__gte=datetime.datetime.now()).all()
+
+        sz = self.serializer_class(instance,many=True)
+
+        return Response(sz.data, status=status.HTTP_200_OK)

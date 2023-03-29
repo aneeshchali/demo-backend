@@ -125,10 +125,20 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    img = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['id', 'email', 'name']
+        fields = ['id', 'email', 'name', 'img']
 
+    def get_img(self, instance:User):
+
+        try:
+            user = Doctor.objects.get(user=instance)
+        except Doctor.DoesNotExist:
+            user = Patient.objects.get(user=instance)
+        return user.img
+
+        # return .objects.filter(product_id=obj.id).count()
 
 class DocSettingDetailsSerializers(serializers.ModelSerializer):
     class Meta:
