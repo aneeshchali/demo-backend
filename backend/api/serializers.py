@@ -30,7 +30,7 @@ class DashboardTableSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Slots
-        fields = ["slot_selected","doc_name","pat_name","doctor","patient","prescription_status","prescription"]
+        fields = ["id","slot_selected","doc_name","pat_name","doctor","patient","prescription_status","prescription"]
 
     def get_doc_name(self, obj):
         return obj.doctor.user.name
@@ -39,7 +39,11 @@ class DashboardTableSerializer(serializers.ModelSerializer):
         return obj.patient.user.name
 
 
+class ConnectCallSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = Slots
+        fields = ["id","video_id","video_cred"]
 
 
 
@@ -60,6 +64,7 @@ class BookSlotSerializer(serializers.Serializer):
         patient = self.context.get('patient')
         date_time = attrs.get('date_time')
         date_time = datetime.datetime.strptime(date_time, "%d-%m-%Y %I:%M %p")
+        date_time_end = date_time+datetime.timedelta(minutes=45)
         doctor_id = attrs.get('doctor_id')
         # return attrs
         if date_time<datetime.datetime.now():
@@ -73,7 +78,7 @@ class BookSlotSerializer(serializers.Serializer):
             VIDEOSDK_API_KEY = "c24cd584-1bdd-4b8a-b59c-72e94e0eb715"
             VIDEOSDK_SECRET_KEY = "a23bbd666418c6cfc51202ca48f94e553cff0aa5b1d473bee3fb52ee429fde83"
 
-            calculation = datetime.datetime.now() - date_time
+            calculation = datetime.datetime.now() - (date_time+datetime.timedelta(minutes=45))
             expiration_in_seconds = math.ceil(calculation.total_seconds())
             expiration = datetime.datetime.now() + datetime.timedelta(seconds=expiration_in_seconds)
 
@@ -86,5 +91,5 @@ class BookSlotSerializer(serializers.Serializer):
             res = ''.join(random.choices(string.ascii_uppercase, k=N))
             doctor = Doctor.objects.get(user_id=doctor_id)
             patient = Patient.objects.get(user=patient)
-            Slots.objects.create(doctor=doctor, patient=patient, video_id=res, video_cred=token, slot_selected=date_time)
+            Slots.objects.create(doctor=doctor, patient=patient,slot_end_time=date_time_end, video_id=res, video_cred=token, slot_selected=date_time)
             return attrs

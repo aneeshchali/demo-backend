@@ -184,6 +184,7 @@ class Slots(models.Model):
     video_recording = models.CharField(null=True,max_length=1000, default=None)
     video_cred = models.CharField(null=True,max_length=1000, default=None)
     slot_selected = models.DateTimeField( blank=True,default=None)
+    slot_end_time = models.DateTimeField( blank=True,default=None)
     prescription_status = models.BooleanField(default=False)
     prescription = models.CharField(null=True,max_length=1000, default=None)
     payment_status = models.BooleanField(default=False)

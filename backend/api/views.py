@@ -9,9 +9,10 @@ from rest_framework.views import APIView
 from user.models import Doctor,Slots,Patient
 from rest_framework.response import Response
 from rest_framework.views import status
-from .serializers import DocDetailsSerializers,DocSpecialistSerializers,BookSlotSerializer,DashboardTableSerializer
+from .serializers import DocDetailsSerializers,DocSpecialistSerializers,BookSlotSerializer,DashboardTableSerializer,ConnectCallSerializer
 from rest_framework.permissions import IsAuthenticated
-
+import datetime
+from django.utils import timezone
 
 # Create your views here.
 class StandardResultsSetPagination(PageNumberPagination):
@@ -109,16 +110,51 @@ class DashboardTableView(APIView):
         print(tabletype)
         if user.is_staff:
             mydoc = Doctor.objects.get(user=user)
-            instance = Slots.objects.filter(doctor=mydoc, slot_selected__lt=datetime.datetime.now()).all()
+            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).all()
             if tabletype=="f":
-                instance = Slots.objects.filter(doctor=mydoc, slot_selected__gte=datetime.datetime.now()).all()
+                instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).all()
 
         else:
             mypat = Patient.objects.get(user=user)
-            instance = Slots.objects.filter(patient=mypat, slot_selected__lt=datetime.datetime.now()).all()
+            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).all()
             if tabletype == "f":
-                instance = Slots.objects.filter(patient=mypat, slot_selected__gte=datetime.datetime.now()).all()
+                instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).all()
 
         sz = self.serializer_class(instance,many=True)
 
         return Response(sz.data, status=status.HTTP_200_OK)
+
+
+
+class ConnectCallView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ConnectCallSerializer
+
+    def post(self, request, format=None):
+        data = request.data
+        slot = Slots.objects.get(id=data['data'])
+        slot_time = slot.slot_selected
+        slot_time = slot_time.strftime("%d/%m/%Y %H:%M:%S")
+        slot_end_time = slot.slot_end_time
+        slot_end_time = slot_end_time.strftime("%d/%m/%Y %H:%M:%S")
+        # print(timezone.localtime() < slot_end_time)
+        # print(timezone.localtime())
+        # print(slot_end_time)
+        a = datetime.datetime.now()
+        checkTime = a.astimezone().strftime("%d/%m/%Y %H:%M:%S")
+        # print(slot_time.strftime("%d/%m/%Y %H:%M:%S"))
+        # print(a.astimezone().strftime("%d/%m/%Y %H:%M:%S"))
+        # print(a.astimezone().strftime("%d/%m/%Y %H:%M:%S") > slot_time.strftime("%d/%m/%Y %H:%M:%S"))
+        # end_slot_time = slot_time + datetime.timedelta(minutes=45)
+        if slot_time <= checkTime <= slot_end_time:
+            return Response({"message": "some data"}, status=status.HTTP_200_OK)
+        elif slot_time > checkTime:
+            return Response({"message": "It looks like we still have some time before the scheduled meeting."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        elif slot_end_time <= checkTime:
+            return Response({"message": "It looks like we passed the time for the scheduled meeting."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        else:
+            sz = self.serializer_class(slot, many=True)
+            return Response(sz.data, status=status.HTTP_200_OK)
