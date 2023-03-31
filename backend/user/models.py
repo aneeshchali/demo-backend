@@ -192,4 +192,4 @@ class Slots(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.dname.user.name} <-> {self.pname.user.name}"
+        return f"{self.doctor.user.name} <-> {self.patient.user.name}"

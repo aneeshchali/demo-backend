@@ -148,7 +148,8 @@ class ConnectCallView(APIView):
         # print(a.astimezone().strftime("%d/%m/%Y %H:%M:%S") > slot_time.strftime("%d/%m/%Y %H:%M:%S"))
         # end_slot_time = slot_time + datetime.timedelta(minutes=45)
         if slot_time <= checkTime <= slot_end_time:
-            return Response({"message": "some data"}, status=status.HTTP_200_OK)
+            sz = self.serializer_class(slot)
+            return Response(sz.data, status=status.HTTP_200_OK)
         elif slot_time > checkTime:
             return Response({"message": "It looks like we still have some time before the scheduled meeting."},
                             status=status.HTTP_400_BAD_REQUEST)
