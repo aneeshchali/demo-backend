@@ -6,13 +6,15 @@ from .pagination import PaginationHandlerMixin
 from django.db.models import Q
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.views import APIView
-from user.models import Doctor,Slots,Patient
+from user.models import Doctor, Slots, Patient
 from rest_framework.response import Response
 from rest_framework.views import status
-from .serializers import DocDetailsSerializers,DocSpecialistSerializers,BookSlotSerializer,DashboardTableSerializer,ConnectCallSerializer
+from .serializers import DocDetailsSerializers, DocSpecialistSerializers, BookSlotSerializer, DashboardTableSerializer, \
+    ConnectCallSerializer, PrescriptionSerializer, DoctorSlotCheckSerializer
 from rest_framework.permissions import IsAuthenticated
 import datetime
 from django.utils import timezone
+
 
 # Create your views here.
 class StandardResultsSetPagination(PageNumberPagination):
@@ -97,10 +99,10 @@ class SlotBookingView(GenericAPIView):
         print(request.data)
         sz = self.get_serializer(data=request.data, context={'patient': request.user})
         sz.is_valid(raise_exception=True)
-        return Response({"success":"successful slot booking!"},status=status.HTTP_200_OK)
+        return Response({"success": "successful slot booking!"}, status=status.HTTP_200_OK)
+
 
 class DashboardTableView(APIView):
-
     permission_classes = [IsAuthenticated]
     serializer_class = DashboardTableSerializer
 
@@ -111,7 +113,7 @@ class DashboardTableView(APIView):
         if user.is_staff:
             mydoc = Doctor.objects.get(user=user)
             instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).all()
-            if tabletype=="f":
+            if tabletype == "f":
                 instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).all()
 
         else:
@@ -120,14 +122,12 @@ class DashboardTableView(APIView):
             if tabletype == "f":
                 instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).all()
 
-        sz = self.serializer_class(instance,many=True)
+        sz = self.serializer_class(instance, many=True)
 
         return Response(sz.data, status=status.HTTP_200_OK)
 
 
-
 class ConnectCallView(APIView):
-
     permission_classes = [IsAuthenticated]
     serializer_class = ConnectCallSerializer
 
@@ -159,3 +159,24 @@ class ConnectCallView(APIView):
         else:
             sz = self.serializer_class(slot, many=True)
             return Response(sz.data, status=status.HTTP_200_OK)
+
+
+class PrescriptionAddView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PrescriptionSerializer
+
+    def post(self, request, format=None):
+        data = request.data['data']
+        slots = Slots.objects.get(id=data['id'])
+        slots.prescription = data['text']
+        slots.save()
+        return Response({"message": "Success!"}, status=status.HTTP_200_OK)
+
+
+class DoctorSlotCheckView(APIView):
+    serializer_class = DoctorSlotCheckSerializer
+
+    def get(self, request, format=None):
+        instance = Slots.objects.all()
+        sz = self.serializer_class(instance, many=True)
+        return Response(sz.data, status=status.HTTP_200_OK)

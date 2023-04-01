@@ -93,3 +93,15 @@ class BookSlotSerializer(serializers.Serializer):
             patient = Patient.objects.get(user=patient)
             Slots.objects.create(doctor=doctor, patient=patient,slot_end_time=date_time_end, video_id=res, video_cred=token, slot_selected=date_time)
             return attrs
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Slots
+        fields = ["prescription"]
+
+class DoctorSlotCheckSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Slots
+        fields = ["slot_selected",]
