@@ -99,8 +99,8 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         model = Slots
         fields = ["prescription"]
 
-class DoctorSlotCheckSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Slots
-        fields = ["slot_selected"]
-
+# class DoctorSlotCheckSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Slots
+#         fields = ["slot_selected"]
+#

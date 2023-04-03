@@ -10,7 +10,7 @@ from user.models import Doctor, Slots, Patient
 from rest_framework.response import Response
 from rest_framework.views import status
 from .serializers import DocDetailsSerializers, DocSpecialistSerializers, BookSlotSerializer, DashboardTableSerializer, \
-    ConnectCallSerializer, PrescriptionSerializer, DoctorSlotCheckSerializer
+    ConnectCallSerializer, PrescriptionSerializer
 from rest_framework.permissions import IsAuthenticated
 import datetime
 import json
@@ -113,15 +113,15 @@ class DashboardTableView(APIView):
         print(tabletype)
         if user.is_staff:
             mydoc = Doctor.objects.get(user=user)
-            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).all()
+            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
             if tabletype == "f":
-                instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).all()
+                instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
 
         else:
             mypat = Patient.objects.get(user=user)
-            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).all()
+            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
             if tabletype == "f":
-                instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).all()
+                instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
 
         sz = self.serializer_class(instance, many=True)
 
@@ -175,15 +175,13 @@ class PrescriptionAddView(APIView):
 
 
 class DoctorSlotCheckView(APIView):
-    serializer_class = DoctorSlotCheckSerializer
 
-    def get(self, request, format=None):
-        setaDate = set()
-        instance = Slots.objects.filter(doctor_id=10)
-        sz = self.serializer_class(instance, many=True)
-        print(len(instance))
+    def post(self, request, format=None):
+        setaDate2={}
+        instance = Slots.objects.filter(doctor_id=request.data["data"])
         for loop in instance:
-            print(loop.slot_selected)
-            
-        # a = json.loads(json.dumps(sz.data))
-        return Response(sz.data, status=status.HTTP_200_OK)
+            if loop.slot_selected.strftime("%d-%m-%Y") in setaDate2:
+                setaDate2[loop.slot_selected.strftime("%d-%m-%Y")].append(loop.slot_selected.strftime("%I:%M %p").lower())
+            else:
+                setaDate2[loop.slot_selected.strftime("%d-%m-%Y")]=[loop.slot_selected.strftime("%I:%M %p").lower()]
+        return Response({"checkslot":setaDate2}, status=status.HTTP_200_OK)
