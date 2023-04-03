@@ -13,7 +13,8 @@ from .serializers import DocDetailsSerializers, DocSpecialistSerializers, BookSl
     ConnectCallSerializer, PrescriptionSerializer, DoctorSlotCheckSerializer
 from rest_framework.permissions import IsAuthenticated
 import datetime
-from django.utils import timezone
+import json
+
 
 
 # Create your views here.
@@ -177,6 +178,12 @@ class DoctorSlotCheckView(APIView):
     serializer_class = DoctorSlotCheckSerializer
 
     def get(self, request, format=None):
-        instance = Slots.objects.all()
+        setaDate = set()
+        instance = Slots.objects.filter(doctor_id=10)
         sz = self.serializer_class(instance, many=True)
+        print(len(instance))
+        for loop in instance:
+            print(loop.slot_selected)
+            
+        # a = json.loads(json.dumps(sz.data))
         return Response(sz.data, status=status.HTTP_200_OK)

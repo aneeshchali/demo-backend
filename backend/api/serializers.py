@@ -68,7 +68,6 @@ class BookSlotSerializer(serializers.Serializer):
         doctor_id = attrs.get('doctor_id')
         # return attrs
         if date_time<datetime.datetime.now():
-            print("hellooo")
             raise serializers.ValidationError({'error': 'Uh oh!, This is a old time slot!'})
 
         if Slots.objects.filter(slot_selected=date_time).exists():
@@ -101,7 +100,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         fields = ["prescription"]
 
 class DoctorSlotCheckSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Slots
-        fields = ["slot_selected",]
+        fields = ["slot_selected"]
+
