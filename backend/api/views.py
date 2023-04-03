@@ -115,13 +115,13 @@ class DashboardTableView(APIView):
             mydoc = Doctor.objects.get(user=user)
             instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
             if tabletype == "f":
-                instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
+                instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by("-slot_selected").all()
 
         else:
             mypat = Patient.objects.get(user=user)
             instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
             if tabletype == "f":
-                instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
+                instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by("-slot_selected").all()
 
         sz = self.serializer_class(instance, many=True)
 

@@ -155,6 +155,7 @@ class OtpSubmitView(APIView):
     def post(self, request, format=None):
         serializer = SubmitOtpSerializer(data=request.data, context={'user': request.user})
         if serializer.is_valid(raise_exception=True):
+
             return Response({'message': "Success!"}, status=status.HTTP_200_OK)
 
 
