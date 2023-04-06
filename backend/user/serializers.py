@@ -1,7 +1,8 @@
 from xml.dom import ValidationErr
 import datetime
 from rest_framework import serializers
-from .models import User, Doctor, Patient
+from .models import User, Doctor, Patient,Slots
+from django.core.mail import send_mail
 
 # below import for Password reset email and encode and decode:
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
@@ -115,7 +116,6 @@ class ExtraPatDetailsSerializer(serializers.Serializer):
 #
 
 
-
 class UserLoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=255)
 
@@ -126,11 +126,13 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     img = serializers.SerializerMethodField()
+    count = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'img']
+        fields = ['id', 'email', 'name', 'img','created_at','is_verified','is_staff','count']
 
-    def get_img(self, instance:User):
+    def get_img(self, instance: User):
 
         try:
             user = Doctor.objects.get(user=instance)
@@ -138,18 +140,38 @@ class UserProfileSerializer(serializers.ModelSerializer):
             user = Patient.objects.get(user=instance)
         return user.img
 
+    def get_count(self,instance:User):
+        count = set()
+        try:
+            user = Doctor.objects.get(user=instance)
+            all_slots =Slots.objects.filter(doctor=user)
+            for loop in all_slots:
+                count.add(loop.patient.user.name)
+            return len(count)
+
+
+        except Doctor.DoesNotExist:
+            user = Patient.objects.get(user=instance)
+            all_slots = Slots.objects.filter(patient=user)
+            for loop in all_slots:
+                count.add(loop.patient.user.name)
+            return len(count)
         # return .objects.filter(product_id=obj.id).count()
+
 
 class DocSettingDetailsSerializers(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        fields = ["user_id","img", "phone", "qualification", "speciality", "hosp_name", "experience", "fees", "slot_start",
+        fields = ["user_id", "img", "phone", "qualification", "speciality", "hosp_name", "experience", "fees",
+                  "slot_start",
                   "slot_end", "age", "gender"]
+
 
 class PatSettingsDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
-        fields =  ["img",'phone', 'age', 'gender']
+        fields = ["img", 'phone', 'age', 'gender']
+
 
 class SubmitOtpSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, write_only=True)
@@ -182,7 +204,7 @@ class UserChangePasswordSerializer(serializers.Serializer):
         password2 = attrs.get('password2')
         user = self.context.get('user')
         if password != password2:
-            raise serializers.ValidationError("passwords does't match")
+            raise serializers.ValidationError({"error":"passwords does't match"})
         user.set_password(password)
         user.save()
         return attrs
@@ -202,9 +224,15 @@ class UserPasswordResetSerializer(serializers.Serializer):
             print('Encoded Uid', uid)
             token = PasswordResetTokenGenerator().make_token(user)
             print("password reset token :", token)
-            link = 'http://localhost:3000/api/user/reset/' + uid + '/' + token
+            link = 'http://localhost:3000/resetpass/' + uid + '/' + token
             print("password reset link", link)
-            # Send Email
+            send_mail(
+                'Here is Your Password Reset Link:',
+                link,
+                'fakeoffice007@gmail.com',
+                [email],
+                fail_silently=False,
+            )
             return attrs
         else:
             raise serializers.ValidationError({'error': 'You are not a Registered User'})
@@ -224,13 +252,14 @@ class FinalPasswordResetSerializer(serializers.Serializer):
             uid = self.context.get('uid')
             token = self.context.get('token')
             if password != password2:
-                raise serializers.ValidationError("passwords does't match")
+                raise serializers.ValidationError({"error": "passwords does't match"})
             id = smart_str(urlsafe_base64_decode(uid))
             user = User.objects.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user, token):
                 raise serializers.ValidationError({"error": "Token is not valid or expired!"})
             user.set_password(password)
             user.save()
+            RefreshToken(token).blacklist()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
