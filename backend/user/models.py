@@ -8,7 +8,8 @@ from django.db import models
 from django.db.models.signals import pre_save,post_save
 from django.dispatch import receiver
 from .helpers import OtpGenerator
-from django.core.mail import send_mail
+from django.core.mail import send_mail,EmailMessage
+from django.template.loader import render_to_string
 
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
@@ -96,13 +97,23 @@ class User(AbstractBaseUser):
 @receiver(post_save,sender=User)
 def print_anything(sender,instance,**kwargs):
     if not instance.is_verified:
-        send_mail(
-            'Here is Your OTP',
-            instance.otp,
-            'fakeoffice007@gmail.com',
-            [instance.email],
-            fail_silently=False,
-        )
+        subject = 'Enter Otp for Verification!'
+        to = instance.email
+        from_email = 'fakeoffice007@gmail.com'
+        template_name = 'otp_template.html'
+        context = {'otp': instance.otp,'user':instance.name}
+        html_content = render_to_string(template_name, context)
+        message = EmailMessage(subject, html_content, from_email, [to])
+        message.content_subtype = "html"
+        message.send()
+
+        # send_mail(
+        #     'Here is Your OTP',
+        #     instance.otp,
+        #     'fakeoffice007@gmail.com',
+        #     [instance.email],
+        #     fail_silently=False,
+        # )
 
 # @receiver(post_save,sender=User)
 # def print_anything(sender,instance,**kwargs):

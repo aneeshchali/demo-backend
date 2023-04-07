@@ -128,6 +128,28 @@ class DashboardTableView(APIView):
         return Response(sz.data, status=status.HTTP_200_OK)
 
 
+
+class DashboardCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+    def get(self, request, format=None):
+        user = request.user
+
+        if user.is_staff:
+            mydoc = Doctor.objects.get(user=user)
+            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
+            instance2 = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
+            return Response({"past": len(instance), "future": len(instance2)}, status=status.HTTP_200_OK)
+        else:
+            mypat = Patient.objects.get(user=user)
+            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
+            instance2 = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
+            return Response({"past":len(instance),"future":len(instance2)}, status=status.HTTP_200_OK)
+
+
+
+
 class ConnectCallView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ConnectCallSerializer

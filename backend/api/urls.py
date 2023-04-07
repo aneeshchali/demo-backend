@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import DocDetailsView, DocSpecialityView, SlotBookingView, DashboardTableView, ConnectCallView, \
-    PrescriptionAddView, DoctorSlotCheckView
+    PrescriptionAddView, DoctorSlotCheckView,DashboardCountView
 
 urlpatterns = [
     path('list/', DocDetailsView.as_view(), name="register"),
@@ -10,4 +10,6 @@ urlpatterns = [
     path('call/connect/', ConnectCallView.as_view(), name="callConnect"),
     path('prescription/add/', PrescriptionAddView.as_view(), name="prescriptionAdd"),
     path('slot/check/', DoctorSlotCheckView.as_view(), name="slotcheck"),
+    path('dashboard/count/', DashboardCountView.as_view(), name="dashcount"),
+
 ]

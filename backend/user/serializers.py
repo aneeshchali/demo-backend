@@ -1,8 +1,10 @@
 from xml.dom import ValidationErr
 import datetime
+
+from django.template.loader import render_to_string
 from rest_framework import serializers
 from .models import User, Doctor, Patient,Slots
-from django.core.mail import send_mail
+from django.core.mail import send_mail,EmailMessage
 
 # below import for Password reset email and encode and decode:
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
@@ -226,13 +228,24 @@ class UserPasswordResetSerializer(serializers.Serializer):
             print("password reset token :", token)
             link = 'http://localhost:3000/resetpass/' + uid + '/' + token
             print("password reset link", link)
-            send_mail(
-                'Here is Your Password Reset Link:',
-                link,
-                'fakeoffice007@gmail.com',
-                [email],
-                fail_silently=False,
-            )
+
+            subject = 'Here is your Password Reset Link.'
+            to = email
+            from_email = 'fakeoffice007@gmail.com'
+            template_name = 'reset_email.html'
+            context = {'link': link, 'user': user.name}
+            html_content = render_to_string(template_name, context)
+            message = EmailMessage(subject, html_content, from_email, [to])
+            message.content_subtype = "html"
+            message.send()
+
+            # send_mail(
+            #     'Here is Your Password Reset Link:',
+            #     link,
+            #     'fakeoffice007@gmail.com',
+            #     [email],
+            #     fail_silently=False,
+            # )
             return attrs
         else:
             raise serializers.ValidationError({'error': 'You are not a Registered User'})
