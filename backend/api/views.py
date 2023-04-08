@@ -10,11 +10,14 @@ from user.models import Doctor, Slots, Patient
 from rest_framework.response import Response
 from rest_framework.views import status
 from .serializers import DocDetailsSerializers, DocSpecialistSerializers, BookSlotSerializer, DashboardTableSerializer, \
-    ConnectCallSerializer, PrescriptionSerializer
+    ConnectCallSerializer, PrescriptionSerializer,FinalPaymentSerializer
 from rest_framework.permissions import IsAuthenticated
 import datetime
-import json
 
+import razorpay
+client = razorpay.Client(auth=("rzp_test_KEzRBHQhq8DEqj", "XHVZTmqLNWIXIubrIZ26SZGY"))
+
+import json
 
 
 # Create your views here.
@@ -103,6 +106,17 @@ class SlotBookingView(GenericAPIView):
         return Response({"success": "successful slot booking!"}, status=status.HTTP_200_OK)
 
 
+class FinalPaymentView(GenericAPIView):
+    serializer_class = FinalPaymentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args):
+        print(request.data,"agaaarddasdas")
+        sz = self.get_serializer(data=request.data)
+        sz.is_valid(raise_exception=True)
+        return Response({"success": "Slot Booking Successful!"}, status=status.HTTP_200_OK)
+
+
 class DashboardTableView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = DashboardTableSerializer
@@ -113,41 +127,45 @@ class DashboardTableView(APIView):
         print(tabletype)
         if user.is_staff:
             mydoc = Doctor.objects.get(user=user)
-            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
+            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).order_by(
+                "-slot_selected").all()
             if tabletype == "f":
-                instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
+                instance = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by(
+                    "slot_selected").all()
 
         else:
             mypat = Patient.objects.get(user=user)
-            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
+            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).order_by(
+                "-slot_selected").all()
             if tabletype == "f":
-                instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
+                instance = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by(
+                    "slot_selected").all()
 
         sz = self.serializer_class(instance, many=True)
 
         return Response(sz.data, status=status.HTTP_200_OK)
 
 
-
 class DashboardCountView(APIView):
     permission_classes = [IsAuthenticated]
-
 
     def get(self, request, format=None):
         user = request.user
 
         if user.is_staff:
             mydoc = Doctor.objects.get(user=user)
-            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
-            instance2 = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
+            instance = Slots.objects.filter(doctor=mydoc, slot_end_time__lt=datetime.datetime.now()).order_by(
+                "-slot_selected").all()
+            instance2 = Slots.objects.filter(doctor=mydoc, slot_end_time__gte=datetime.datetime.now()).order_by(
+                "slot_selected").all()
             return Response({"past": len(instance), "future": len(instance2)}, status=status.HTTP_200_OK)
         else:
             mypat = Patient.objects.get(user=user)
-            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).order_by("-slot_selected").all()
-            instance2 = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by("slot_selected").all()
-            return Response({"past":len(instance),"future":len(instance2)}, status=status.HTTP_200_OK)
-
-
+            instance = Slots.objects.filter(patient=mypat, slot_end_time__lt=datetime.datetime.now()).order_by(
+                "-slot_selected").all()
+            instance2 = Slots.objects.filter(patient=mypat, slot_end_time__gte=datetime.datetime.now()).order_by(
+                "slot_selected").all()
+            return Response({"past": len(instance), "future": len(instance2)}, status=status.HTTP_200_OK)
 
 
 class ConnectCallView(APIView):
@@ -199,11 +217,19 @@ class PrescriptionAddView(APIView):
 class DoctorSlotCheckView(APIView):
 
     def post(self, request, format=None):
-        setaDate2={}
+        setaDate2 = {}
+        feesinstance = Doctor.objects.get(user_id=request.data["data"])
+        DATA = {
+            "amount": feesinstance.fees * 100,
+            "currency": "INR",
+
+        }
+        orderId = client.order.create(data=DATA)
         instance = Slots.objects.filter(doctor_id=request.data["data"])
         for loop in instance:
             if loop.slot_selected.strftime("%d-%m-%Y") in setaDate2:
-                setaDate2[loop.slot_selected.strftime("%d-%m-%Y")].append(loop.slot_selected.strftime("%I:%M %p").lower())
+                setaDate2[loop.slot_selected.strftime("%d-%m-%Y")].append(
+                    loop.slot_selected.strftime("%I:%M %p").lower())
             else:
-                setaDate2[loop.slot_selected.strftime("%d-%m-%Y")]=[loop.slot_selected.strftime("%I:%M %p").lower()]
-        return Response({"checkslot":setaDate2}, status=status.HTTP_200_OK)
+                setaDate2[loop.slot_selected.strftime("%d-%m-%Y")] = [loop.slot_selected.strftime("%I:%M %p").lower()]
+        return Response({"order_id":orderId["id"],"fees":feesinstance.fees * 100,"checkslot": setaDate2}, status=status.HTTP_200_OK)

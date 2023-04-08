@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import DocDetailsView, DocSpecialityView, SlotBookingView, DashboardTableView, ConnectCallView, \
-    PrescriptionAddView, DoctorSlotCheckView,DashboardCountView
+    PrescriptionAddView, DoctorSlotCheckView,DashboardCountView,FinalPaymentView
 
 urlpatterns = [
     path('list/', DocDetailsView.as_view(), name="register"),
@@ -11,5 +11,6 @@ urlpatterns = [
     path('prescription/add/', PrescriptionAddView.as_view(), name="prescriptionAdd"),
     path('slot/check/', DoctorSlotCheckView.as_view(), name="slotcheck"),
     path('dashboard/count/', DashboardCountView.as_view(), name="dashcount"),
+    path('payment/status/', FinalPaymentView.as_view(), name="pstatus"),
 
 ]

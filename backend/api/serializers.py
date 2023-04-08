@@ -3,12 +3,11 @@ import datetime
 import math
 import string
 import random
-
-N = 15
-
 import jwt
-
 from user.models import Doctor, User, Slots, Patient
+import razorpay
+client = razorpay.Client(auth=("rzp_test_KEzRBHQhq8DEqj", "XHVZTmqLNWIXIubrIZ26SZGY"))
+N = 15
 
 
 class DocDetailsSerializers(serializers.ModelSerializer):
@@ -56,13 +55,16 @@ class DocSpecialistSerializers(serializers.ModelSerializer):
 class BookSlotSerializer(serializers.Serializer):
     date_time = serializers.CharField(max_length=200)
     doctor_id = serializers.CharField(max_length=200)
+    order_id = serializers.CharField(max_length=200)
+
 
     class Meta:
-        fields = ['date_time', 'doctor_id']
+        fields = ['date_time', 'doctor_id','order_id']
 
     def validate(self, attrs):
         patient = self.context.get('patient')
         date_time = attrs.get('date_time')
+        order_id = attrs.get('order_id')
         date_time = datetime.datetime.strptime(date_time, "%d-%m-%Y %I:%M %p")
         date_time_end = date_time+datetime.timedelta(minutes=45)
         doctor_id = attrs.get('doctor_id')
@@ -90,8 +92,40 @@ class BookSlotSerializer(serializers.Serializer):
             res = ''.join(random.choices(string.ascii_uppercase, k=N))
             doctor = Doctor.objects.get(user_id=doctor_id)
             patient = Patient.objects.get(user=patient)
-            Slots.objects.create(doctor=doctor, patient=patient,slot_end_time=date_time_end, video_id=res, video_cred=token, slot_selected=date_time)
+            Slots.objects.create(doctor=doctor, patient=patient,order_id=order_id,slot_end_time=date_time_end, video_id=res, video_cred=token, slot_selected=date_time)
             return attrs
+
+
+class FinalPaymentSerializer(serializers.Serializer):
+    status = serializers.CharField(max_length=1)
+    order_id = serializers.CharField(max_length=1000)
+    payment_id = serializers.CharField(max_length=1000)
+
+
+    class Meta:
+        fields = ['order_id','payment_id','status']
+
+    def validate(self, attrs):
+        status = attrs.get('status')
+        if status == 'p':
+            order_id = attrs.get('order_id')
+            payment_id = attrs.get('payment_id')
+            updateInstance = Slots.objects.get(order_id=order_id)
+            print(updateInstance)
+            updateInstance.payment_id = payment_id
+            updateInstance.payment_status = True
+            updateInstance.save()
+            return attrs
+        else:
+            order_id = attrs.get('order_id')
+            deleteInstance = Slots.objects.get(order_id=order_id)
+            deleteInstance.delete()
+            raise serializers.ValidationError({"error":"error"})
+            return attrs
+
+
+
+
 
 class PrescriptionSerializer(serializers.ModelSerializer):
 
