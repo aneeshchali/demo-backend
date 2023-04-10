@@ -99,7 +99,7 @@ def print_anything(sender,instance,**kwargs):
     if not instance.is_verified:
         subject = 'Enter Otp for Verification!'
         to = instance.email
-        from_email = 'fakeoffice007@gmail.com'
+        from_email = 'chali.aneesh@gmail.com'
         template_name = 'otp_template.html'
         context = {'otp': instance.otp,'user':instance.name}
         html_content = render_to_string(template_name, context)
@@ -207,3 +207,27 @@ class Slots(models.Model):
 
     def __str__(self):
         return f"{self.doctor.user.name} <-> {self.patient.user.name}"
+
+@receiver(post_save, sender=Slots)
+def send_slot(sender, instance, **kwargs):
+    if instance.payment_status:
+        print("1111")
+        if not sender.objects.get(id=instance.id).payment_status:
+            print("2222")
+            subject = 'Slot Booking Done'
+            to = instance.doctor.user.email
+            from_email = 'chali.aneesh@gmail.com'
+            template_name = 'slot_book.html'
+            context = {'user':instance.doctor.user.name, 'doctor': instance.doctor.user.name, 'patient': instance.patient.user.name,'time':instance.slot_selected}
+            html_content = render_to_string(template_name, context)
+            message = EmailMessage(subject, html_content, from_email, [to])
+            message.content_subtype = "html"
+            message.send()
+
+            to = instance.patient.user.email
+            context = {'user': instance.patient.user.name, 'doctor': instance.doctor.user.name,
+                       'patient': instance.patient.user.name, 'time': instance.slot_selected}
+            html_content = render_to_string(template_name, context)
+            message = EmailMessage(subject, html_content, from_email, [to])
+            message.content_subtype = "html"
+            message.send()

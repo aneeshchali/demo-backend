@@ -231,7 +231,7 @@ class UserPasswordResetSerializer(serializers.Serializer):
 
             subject = 'Here is your Password Reset Link.'
             to = email
-            from_email = 'fakeoffice007@gmail.com'
+            from_email = 'chali.aneesh@gmail.com'
             template_name = 'reset_email.html'
             context = {'link': link, 'user': user.name}
             html_content = render_to_string(template_name, context)
@@ -272,7 +272,7 @@ class FinalPasswordResetSerializer(serializers.Serializer):
                 raise serializers.ValidationError({"error": "Token is not valid or expired!"})
             user.set_password(password)
             user.save()
-            RefreshToken(token).blacklist()
+            # RefreshToken(token).blacklist()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
