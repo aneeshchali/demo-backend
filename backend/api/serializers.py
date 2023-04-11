@@ -4,6 +4,8 @@ import math
 import string
 import random
 import jwt
+from django.core.mail import send_mail,EmailMessage
+from django.template.loader import render_to_string
 from user.models import Doctor, User, Slots, Patient
 import razorpay
 client = razorpay.Client(auth=("rzp_test_KEzRBHQhq8DEqj", "XHVZTmqLNWIXIubrIZ26SZGY"))
@@ -115,6 +117,19 @@ class FinalPaymentSerializer(serializers.Serializer):
             updateInstance.payment_id = payment_id
             updateInstance.payment_status = True
             updateInstance.save()
+
+            #send mail to both the parties
+            subject = 'Slot Booking Done'
+            to = updateInstance.doctor.user.email
+            from_email = 'chali.aneesh@gmail.com'
+            template_name = 'slot_book.html'
+            context = {'user': updateInstance.doctor.user.name, 'doctor': updateInstance.doctor.user.name,
+                       'patient': updateInstance.patient.user.name, 'time': updateInstance.slot_selected}
+            html_content = render_to_string(template_name, context)
+            message = EmailMessage(subject, html_content, from_email, [to])
+            message.content_subtype = "html"
+            message.send()
+
             return attrs
         else:
             order_id = attrs.get('order_id')

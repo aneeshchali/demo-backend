@@ -10,11 +10,12 @@ from user.models import Doctor, Slots, Patient
 from rest_framework.response import Response
 from rest_framework.views import status
 from .serializers import DocDetailsSerializers, DocSpecialistSerializers, BookSlotSerializer, DashboardTableSerializer, \
-    ConnectCallSerializer, PrescriptionSerializer,FinalPaymentSerializer
+    ConnectCallSerializer, PrescriptionSerializer, FinalPaymentSerializer
 from rest_framework.permissions import IsAuthenticated
 import datetime
 
 import razorpay
+
 client = razorpay.Client(auth=("rzp_test_KEzRBHQhq8DEqj", "XHVZTmqLNWIXIubrIZ26SZGY"))
 
 import json
@@ -38,49 +39,61 @@ class DocDetailsView(APIView, PaginationHandlerMixin):
         if l[0] == "":
             if s:
                 if s == "fasc":
-                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & Q(
-                        user__name__icontains=search)).order_by('-fees').all()
+                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).order_by('-fees').all()
                 elif s == "fdes":
-                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & Q(
-                        user__name__icontains=search)).order_by('fees').all()
+                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).order_by('fees').all()
                 elif s == "Female":
-                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & Q(
-                        user__name__icontains=search) & Q(gender__exact="F")).all()
+                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search)) & Q(gender__exact="F")).all()
                 elif s == "Male":
-                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & Q(
-                        user__name__icontains=search) & Q(gender__exact="M")).all()
+                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search)) & Q(gender__exact="M")).all()
                 else:
-                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & Q(
-                        user__name__icontains=search)).all()
+                    instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).all()
             else:
-                instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & Q(
-                    user__name__icontains=search)).all()
+                instance = Doctor.objects.filter(Q(details_status=True) & Q(admin_verified=True) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).all()
         else:
             if s:
                 if s == "fasc":
                     instance = Doctor.objects.filter(
-                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & Q(
-                            user__name__icontains=search)).order_by('-fees').all()
+                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).order_by('-fees').all()
                 elif s == "fdes":
                     instance = Doctor.objects.filter(
-                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & Q(
-                            user__name__icontains=search)).order_by('fees').all()
+                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).order_by('fees').all()
                 elif s == "Female":
                     instance = Doctor.objects.filter(
-                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & Q(
-                            user__name__icontains=search) & Q(gender__exact="F")).all()
+                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search)) & Q(gender__exact="F")).all()
                 elif s == "Male":
                     instance = Doctor.objects.filter(
-                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & Q(
-                            user__name__icontains=search) & Q(gender__exact="M")).all()
+                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search)) & Q(gender__exact="M")).all()
                 else:
                     instance = Doctor.objects.filter(
-                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & Q(
-                            user__name__icontains=search)).all()
+                        Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).all()
             else:
                 instance = Doctor.objects.filter(
-                    Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & Q(
-                        user__name__icontains=search)).all()
+                    Q(details_status=True) & Q(admin_verified=True) & Q(speciality__in=l) & (Q(
+                        user__name__icontains=search) | Q(
+                        hosp_name__icontains=search))).all()
         page = self.paginate_queryset(instance)
         if page is not None:
             serializer = self.get_paginated_response(self.serializer_class(page,
@@ -111,7 +124,7 @@ class FinalPaymentView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args):
-        print(request.data,"agaaarddasdas")
+        print(request.data, "agaaarddasdas")
         sz = self.get_serializer(data=request.data)
         sz.is_valid(raise_exception=True)
         return Response({"success": "Slot Booking Successful!"}, status=status.HTTP_200_OK)
@@ -179,15 +192,10 @@ class ConnectCallView(APIView):
         slot_time = slot_time.strftime("%d/%m/%Y %H:%M:%S")
         slot_end_time = slot.slot_end_time
         slot_end_time = slot_end_time.strftime("%d/%m/%Y %H:%M:%S")
-        # print(timezone.localtime() < slot_end_time)
-        # print(timezone.localtime())
-        # print(slot_end_time)
+
         a = datetime.datetime.now()
         checkTime = a.astimezone().strftime("%d/%m/%Y %H:%M:%S")
-        # print(slot_time.strftime("%d/%m/%Y %H:%M:%S"))
-        # print(a.astimezone().strftime("%d/%m/%Y %H:%M:%S"))
-        # print(a.astimezone().strftime("%d/%m/%Y %H:%M:%S") > slot_time.strftime("%d/%m/%Y %H:%M:%S"))
-        # end_slot_time = slot_time + datetime.timedelta(minutes=45)
+
         if slot_time <= checkTime <= slot_end_time:
             sz = self.serializer_class(slot)
             return Response(sz.data, status=status.HTTP_200_OK)
@@ -232,4 +240,5 @@ class DoctorSlotCheckView(APIView):
                     loop.slot_selected.strftime("%I:%M %p").lower())
             else:
                 setaDate2[loop.slot_selected.strftime("%d-%m-%Y")] = [loop.slot_selected.strftime("%I:%M %p").lower()]
-        return Response({"order_id":orderId["id"],"fees":feesinstance.fees * 100,"checkslot": setaDate2}, status=status.HTTP_200_OK)
+        return Response({"order_id": orderId["id"], "fees": feesinstance.fees * 100, "checkslot": setaDate2},
+                        status=status.HTTP_200_OK)
