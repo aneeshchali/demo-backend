@@ -32,7 +32,8 @@ class MyUserManager(BaseUserManager):
             email=self.normalize_email(email),
             name=name,
             is_staff=is_staff,
-            otp=otp
+            otp=otp,
+            otp_exp=datetime.datetime.now()
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -73,6 +74,7 @@ class User(AbstractBaseUser):
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     otp = models.IntegerField(default=000000)
+    otp_exp = models.DateTimeField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

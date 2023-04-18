@@ -1,8 +1,7 @@
-from rest_framework.pagination import PageNumberPagination
+# from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView,ListAPIView
-from rest_framework.views import status
-from rest_framework.views import APIView
+from rest_framework.views import status,APIView
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, \
     UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer, \
     SubmitOtpSerializer, ExtraDocDetailsSerializer,ExtraPatDetailsSerializer,DocSettingDetailsSerializers,PatSettingsDetailsSerializer
@@ -10,7 +9,6 @@ from django.contrib.auth import authenticate, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .helpers import OtpGenerator
-# import datetime
 from .models import Doctor,Patient
 
 def get_tokens_for_user(user):

@@ -239,13 +239,6 @@ class UserPasswordResetSerializer(serializers.Serializer):
             message.content_subtype = "html"
             message.send()
 
-            # send_mail(
-            #     'Here is Your Password Reset Link:',
-            #     link,
-            #     'fakeoffice007@gmail.com',
-            #     [email],
-            #     fail_silently=False,
-            # )
             return attrs
         else:
             raise serializers.ValidationError({'error': 'You are not a Registered User'})
