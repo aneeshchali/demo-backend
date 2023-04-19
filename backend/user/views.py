@@ -1,15 +1,23 @@
 # from rest_framework.pagination import PageNumberPagination
+import datetime
+
 from rest_framework.response import Response
-from rest_framework.generics import GenericAPIView,ListAPIView
-from rest_framework.views import status,APIView
+from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework.views import status, APIView
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, \
     UserChangePasswordSerializer, UserPasswordResetSerializer, FinalPasswordResetSerializer, LogoutTokenSerializer, \
-    SubmitOtpSerializer, ExtraDocDetailsSerializer,ExtraPatDetailsSerializer,DocSettingDetailsSerializers,PatSettingsDetailsSerializer
+    SubmitOtpSerializer, ExtraDocDetailsSerializer, ExtraPatDetailsSerializer, DocSettingDetailsSerializers, \
+    PatSettingsDetailsSerializer
+
 from django.contrib.auth import authenticate, logout
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .helpers import OtpGenerator
-from .models import Doctor,Patient
+from .models import Doctor, Patient,User
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -30,6 +38,32 @@ class UserRegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class UserGRegistrationView(APIView):
+    def post(self, request, format=None):
+        token = request.data['gtoken']
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(),
+                                                  "735677979851-h1d0sbreqs3h5ucmnuuppvlobt0aql7r.apps.googleusercontent.com")
+            name = idinfo['name']
+            email = idinfo['email']
+            password = OtpGenerator.generateOTP()
+            password2 = password
+            is_staff = False
+
+            serializer = UserRegistrationSerializer(
+                data={"name": name,"email":email, "is_staff": is_staff, "password": password, "password2": password2})
+            if serializer.is_valid(raise_exception=True):
+                user = serializer.save()
+                user.is_verified = True
+                user.save()
+                token = get_tokens_for_user(user)
+                return Response({'token': token,"name":user.name, 'message': 'Successfull'}, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except:
+            return Response({'msg': 'UnSuccessful Signup!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ExtraDocDetailsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -45,6 +79,7 @@ class ExtraDocDetailsView(APIView):
         serializer = DocSettingDetailsSerializers(doctor)
         print(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class ExtraPatDetailsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -64,9 +99,11 @@ class ExtraPatDetailsView(APIView):
     #     serializer = docSettingsListSerializer(request.user)
     #     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class ImgUploadView(APIView):
     permission_classes = [IsAuthenticated]
-    def put(self,request):
+
+    def put(self, request):
         user = request.user
         if user.is_staff:
             doctor = Doctor.objects.get(user=request.user)
@@ -77,8 +114,6 @@ class ImgUploadView(APIView):
             patient.img = request.data["data"]
             patient.save()
         return Response({'message': 'Successfull Update!'}, status=status.HTTP_201_CREATED)
-
-
 
 
 class UserLoginView(APIView):
@@ -92,10 +127,27 @@ class UserLoginView(APIView):
             if user is not None:
                 token = get_tokens_for_user(user)
                 return Response({"token": token, "type": user.is_staff, "verified": user.is_verified,
-                                 "details": user.details_status,"username":user.name}, status=status.HTTP_200_OK)
+                                 "details": user.details_status, "username": user.name}, status=status.HTTP_200_OK)
             else:
                 return Response({'errors': 'Email or Password is not Valid'},
                                 status=status.HTTP_400_BAD_REQUEST)
+
+class GUserLoginView(APIView):
+    def post(self, request, format=None):
+        token = request.data['gtoken']
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(),
+                                                  "735677979851-h1d0sbreqs3h5ucmnuuppvlobt0aql7r.apps.googleusercontent.com")
+
+            email = idinfo['email']
+
+            user = User.objects.get(email=email)
+            token = get_tokens_for_user(user)
+            return Response({"token": token, "type": user.is_staff, "verified": user.is_verified,
+                             "details": user.details_status, "username": user.name}, status=status.HTTP_200_OK)
+
+        except:
+            return Response({'msg': 'Unsuccessful Login!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # class UserLogoutView(APIView):
@@ -114,8 +166,6 @@ class UserLogoutView(GenericAPIView):
         sz.is_valid(raise_exception=True)
         sz.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 
 
 class UserProfileView(APIView):
@@ -143,6 +193,7 @@ class OtpRefreshView(APIView):
     def post(self, request, format=None):
         user = request.user
         user.otp = OtpGenerator.generateOTP()
+        user.otp_exp = datetime.datetime.now()
         user.save()
         return Response({'message': "New Otp Sent."}, status=status.HTTP_200_OK)
 
@@ -153,7 +204,6 @@ class OtpSubmitView(APIView):
     def post(self, request, format=None):
         serializer = SubmitOtpSerializer(data=request.data, context={'user': request.user})
         if serializer.is_valid(raise_exception=True):
-
             return Response({'message': "Success!"}, status=status.HTTP_200_OK)
 
 
