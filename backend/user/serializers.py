@@ -1,5 +1,7 @@
 from xml.dom import ValidationErr
 import datetime
+import pytz
+utc=pytz.UTC
 
 from django.template.loader import render_to_string
 from rest_framework import serializers
@@ -187,6 +189,8 @@ class SubmitOtpSerializer(serializers.Serializer):
         user = self.context.get('user')
         userOTP = user.otp
         if int(userOTP) == int(otp):
+            if (user.otp_exp+datetime.timedelta(seconds=60)) < datetime.datetime.now().replace(tzinfo=utc):
+                raise serializers.ValidationError("Otp Expired! Please Recreate.")
             user.is_verified = True
             user.save()
         else:
