@@ -41,6 +41,7 @@ class UserRegistrationView(APIView):
 class UserGRegistrationView(APIView):
     def post(self, request, format=None):
         token = request.data['gtoken']
+        stafftype = request.data['is_staff']
         try:
             idinfo = id_token.verify_oauth2_token(token, requests.Request(),
                                                   "735677979851-h1d0sbreqs3h5ucmnuuppvlobt0aql7r.apps.googleusercontent.com")
@@ -48,7 +49,7 @@ class UserGRegistrationView(APIView):
             email = idinfo['email']
             password = OtpGenerator.generateOTP()
             password2 = password
-            is_staff = False
+            is_staff = stafftype
 
             serializer = UserRegistrationSerializer(
                 data={"name": name,"email":email, "is_staff": is_staff, "password": password, "password2": password2})

@@ -213,9 +213,7 @@ class Slots(models.Model):
 @receiver(post_save, sender=Slots)
 def send_slot(sender, instance, **kwargs):
     if instance.payment_status:
-        print("1111")
         if not sender.objects.get(id=instance.id).payment_status:
-            print("2222")
             subject = 'Slot Booking Done'
             to = instance.doctor.user.email
             from_email = 'chali.aneesh@gmail.com'
